@@ -1,7 +1,7 @@
 name:  ProgressBar
 author:  davidwalsh
-current:  
-category:  
-tags:  []
-docs:  
-demo:  
+current:  1.0
+category:  Interface
+tags:  [progress,fx,forms,images]
+docs:  http://davidwalsh.name/js/progressbar
+demo:  http://davidwalsh.name/js/progressbar
