@@ -8,11 +8,9 @@ authors:
 license:
   - MIT-style license
 
-requires:
-  core/1.2.1:   '*'
-  more/1.2.1:   'Fx.*'
+requires: [Core/Class.Extras, Core/Fx.Tween]
 
-provides:
+provides: 
   - ProgressBar
 ...
 */
@@ -24,9 +22,9 @@ var ProgressBar = new Class({
 	//options
 	options: {
 		container: document.body,
-		boxID:'progress-bar-box-id',
-		percentageID:'progress-bar-percentage-id',
-		displayID:'progress-bar-display-id',
+		boxElement: 'div.progress-bar-box',
+		percentageElement:'div.progress-bar-percentage',
+		displayElement:'div.progress-bar-display',
 		startPercentage: 0,
 		displayText: false,
 		speed:10,
@@ -36,7 +34,7 @@ var ProgressBar = new Class({
 		onChange: $empty*/
 	},
 
-	//initialization
+	// initialization
 	initialize: function(options) {
 		//set options
 		this.setOptions(options);
@@ -46,54 +44,57 @@ var ProgressBar = new Class({
 		this.createElements();
 	},
 
-	//creates the box and percentage elements
+	// creates the box and percentage elements
 	createElements: function() {
-		var box = new Element('div', { 
-			id:this.options.boxID 
-		}).inject(this.options.container);
-		var perc = new Element('div', { 
-			id:this.options.percentageID, 
-			style:'width:0px;' 
-		}).inject(box);
+		this.box = new Element(this.options.boxElement)
+			.inject(this.options.container);
+		this.perc = new Element(this.options.percentageElement, {
+			style: 'width: 0px;'
+		}).inject(this.box).set('tween', { 
+			duration: this.options.speed,
+			link:'cancel',
+			onComplete: this.fxComplete.bind(this)
+		});
 		if(this.options.displayText) { 
-			var text = new Element('div', { 
-				id:this.options.displayID 
-			}).inject(this.options.container);
+			this.text = new Element(this.options.displayElement)
+				.inject(this.container);
 		}
 		this.set(this.options.startPercentage);
 	},
 
-	//calculates width in pixels from percentage
+	// calculates width in pixels from percentage
 	calculate: function(percentage) {
-		return (document.id(this.options.boxID).getStyle('width').replace('px','') * (percentage / 100)).toInt();
+		return (this.box.getStyle('width').replace('px','') * (percentage / 100)).toInt();
 	},
 
-	//animates the change in percentage
-	animate: function(go) {
-		var run = false, self = this;
-		if(!self.options.allowMore && go > 100) go = 100;
-		self.to = go.toInt();
-		document.id(self.options.percentageID).set('morph', { 
-			duration: this.options.speed,
-			link:'cancel',
-			onComplete: function() {
-				self.fireEvent('change',[self.to]);
-				if(go >= 100) self.fireEvent('complete',[self.to]);
-			}
-		}).morph({
-			width:self.calculate(go)
-		});
-		if(self.options.displayText) document.id(self.options.displayID).set('text', self.to + '%'); 
+	// animates the change in percentage via fx or immediately
+	set: function(to, immediate) {
+		var run = false;
+		this.to = to.toFloat();
+		if(!this.options.allowMore && this.to > 100) 
+			this.to = 100;
+		this.perc.get('tween').cancel();
+		var func = immediate ? 'setStyle' : 'tween';
+		this.perc[func]('width', this.calculate(this.to));
+		if (immediate) this.fxComplete();
+		if(this.options.displayText) this.text.set('text', this.to + '%'); 
+		return this;
+	},
+	
+	// fx complete event
+	fxComplete: function () {
+		this.fireEvent('change',[this.to]);
+		if(this.to >= 100) self.fireEvent('complete',[this.to]);
 	},
 
-	//sets the percentage from its current state to desired percentage
-	set: function(to) {
-		this.animate(to);
-	},
-
-	//steps a pre-determined percentage
+	// steps a pre-determined percentage
 	step: function() {
 		this.set(this.to + this.options.step);
+	},
+	
+	// use for document.id on an instance of ProgressBar
+	toElement: function () {
+		return this.box;
 	}
 
 });

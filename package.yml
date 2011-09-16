@@ -5,3 +5,6 @@ category:  Interface
 tags:  [progress,fx,forms,images]
 docs:  http://davidwalsh.name/js/progressbar
 demo:  http://davidwalsh.name/js/progressbar
+
+sources:
+  - "Source/ProgressBar.js"
